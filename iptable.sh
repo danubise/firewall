@@ -131,7 +131,9 @@ $IPT -I INPUT -i $EXTR -p tcp --dport 22 -j sshguard
 function start(){
     echo "Starting firewall rules"
 }
-function check
+function check(){
+    echo "Check function"
+}
 
 
 case $1 in
@@ -140,6 +142,7 @@ start)
     ;;
 restart)
     echo "Restart"
+    ;;
 *)
   Message="I seem to be running with an nonexistent amount of disk space..."
   ;;
