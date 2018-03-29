@@ -121,23 +121,36 @@ done
 
 $IPT -N sshguard
 #уберает блок для  фрагментации пакетов, необходимо для впн
-$IPT -I FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
-$IPT -A sshguard -m state --state NEW -m recent --name SSH --rcheck --seconds 1200 --hitcount 3 -j LOG --log-prefix "SSH-shield: "
-$IPT -A sshguard -m state --state NEW -m recent --name SSH --update --seconds 1200 --hitcount 3 -j DROP
-$IPT -A sshguard -m state --state NEW -m recent --name SSH --set -j ACCEPT
-$IPT -A sshguard -j ACCEPT
-$IPT -I INPUT -i $EXTR -p tcp --dport 22 -j sshguard
+#$IPT -I FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+#$IPT -A sshguard -m state --state NEW -m recent --name SSH --rcheck --seconds 1200 --hitcount 3 -j LOG --log-prefix "SSH-shield: "
+#$IPT -A sshguard -m state --state NEW -m recent --name SSH --update --seconds 1200 --hitcount 3 -j DROP
+#$IPT -A sshguard -m state --state NEW -m recent --name SSH --set -j ACCEPT
+#$IPT -A sshguard -j ACCEPT
+#$IPT -I INPUT -i $EXTR -p tcp --dport 22 -j sshguard
 
 #$IPT -t nat -A PREROUTING -p tcp -i $EXTR --dport 80 -j DNAT --to-destination 192.168.123.210:80
 #$IPT -t nat -A PREROUTING -p tcp -i $EXTR --dport 8022 -j DNAT --to-destination 192.168.123.210:22
 #$IPT -t nat -A PREROUTING -p tcp -i $EXTR --dport 443 -j DNAT --to-destination 192.168.123.210:443
 #$IPT -A FORWARD -p tcp -d 192.168.123.210 -j ACCEPT
+if [ ! -f FILE_SSH ]
+then
+    $IPT -N sshAccept
+    cat $FILE_SSH | grep -v '^#' | while read line
+    do
+        $IPT -I sshAccept -i $EXTR -s $line -j ACCEPT
+    done
+    $IPT -A sshAccept -i $EXTR  -j DROP
+    $IPT -I INPUT -i $EXTR -p tcp --dport 22 -j sshAccept
+
+else
+    echo "File not found " $FILE_TASIX
+fi
 
 if [ ! -f FILE_TASIX ]
 then
     $IPT -t nat -N PortForward
     $IPT -t nat -A PortForward -p tcp -i $EXTR --dport 80 -j DNAT --to-destination 192.168.123.210:80
-    $IPT -t nat -A PortForward -p tcp -i $EXTR --dport 8022 -j DNAT --to-destination 192.168.123.210:22
+    #$IPT -t nat -A PortForward -p tcp -i $EXTR --dport 8022 -j DNAT --to-destination 192.168.123.210:22
     $IPT -t nat -A PortForward -p tcp -i $EXTR --dport 443 -j DNAT --to-destination 192.168.123.210:443
     $IPT -A FORWARD -p tcp -d 192.168.123.210 -j ACCEPT
     $IPT -t nat -N tasix
