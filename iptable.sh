@@ -128,6 +128,11 @@ $IPT -A sshguard -m state --state NEW -m recent --name SSH --set -j ACCEPT
 $IPT -A sshguard -j ACCEPT
 $IPT -I INPUT -i $EXTR -p tcp --dport 22 -j sshguard
 
+$IPT -t nat -A PREROUTING -p tcp -i $EXTR --dport 80 -j DNAT --to-destination 192.168.123.210:80
+$IPT -t nat -A PREROUTING -p tcp -i $EXTR --dport 8022 -j DNAT --to-destination 192.168.123.210:22
+$IPT -t nat -A PREROUTING -p tcp -i $EXTR --dport 443 -j DNAT --to-destination 192.168.123.210:443
+$IPT -A FORWARD -p tcp -d 192.168.123.210 -j ACCEPT
+
 function start(){
     echo "Starting firewall rules"
 }
